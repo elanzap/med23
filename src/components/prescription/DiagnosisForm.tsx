@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { useDiagnosisStore } from '../../stores/diagnosisStore';
+import { SearchableSelect } from '../common/SearchableSelect';
 import type { DiagnosisTemplate } from '../../types';
 
 interface DiagnosisFormProps {
@@ -15,7 +16,7 @@ export const DiagnosisForm: React.FC<DiagnosisFormProps> = ({
   onTemplateSelect 
 }) => {
   const [selectedDiagnosis, setSelectedDiagnosis] = React.useState('');
-  const { diagnoses, diagnosisTemplates } = useDiagnosisStore();
+  const { diagnosisTemplates } = useDiagnosisStore();
 
   const handleAdd = () => {
     if (!selectedDiagnosis) return;
@@ -31,11 +32,6 @@ export const DiagnosisForm: React.FC<DiagnosisFormProps> = ({
           onTemplateSelect(selectedTemplate);
         }
       }
-    } else {
-      // If it's a regular diagnosis, just add it
-      if (!value.includes(selectedDiagnosis)) {
-        onChange([...value, selectedDiagnosis]);
-      }
     }
     setSelectedDiagnosis('');
   };
@@ -44,6 +40,14 @@ export const DiagnosisForm: React.FC<DiagnosisFormProps> = ({
     onChange(value.filter(d => d !== diagnosisToRemove));
   };
 
+  // Prepare options for SearchableSelect
+  const templateOptions = diagnosisTemplates
+    .filter(template => !value.includes(template.name))
+    .map(template => ({
+      value: template.id,
+      label: `${template.name} (Template)`
+    }));
+
   return (
     <div className="space-y-4">
       <label className="block text-sm font-medium text-gray-700">
@@ -51,38 +55,19 @@ export const DiagnosisForm: React.FC<DiagnosisFormProps> = ({
       </label>
       
       <div className="flex gap-2">
-        <select
+        <SearchableSelect
+          label="Select Diagnosis Template"
+          options={templateOptions}
           value={selectedDiagnosis}
-          onChange={(e) => setSelectedDiagnosis(e.target.value)}
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        >
-          <option value="">Select diagnosis...</option>
-          {diagnosisTemplates.length > 0 && (
-            <optgroup label="Templates">
-              {diagnosisTemplates
-                .filter(template => !value.includes(template.name))
-                .map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name} (Template)
-                  </option>
-                ))}
-            </optgroup>
-          )}
-          <optgroup label="Standard Diagnoses">
-            {diagnoses
-              .filter(diagnosis => !value.includes(diagnosis))
-              .map((diagnosis) => (
-                <option key={diagnosis} value={diagnosis}>
-                  {diagnosis}
-                </option>
-              ))}
-          </optgroup>
-        </select>
+          onChange={setSelectedDiagnosis}
+          placeholder="Search diagnosis templates..."
+          className="flex-grow"
+        />
         <button
           type="button"
           onClick={handleAdd}
           disabled={!selectedDiagnosis}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="shrink-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           Add
         </button>
@@ -99,12 +84,12 @@ export const DiagnosisForm: React.FC<DiagnosisFormProps> = ({
               >
                 {diagnosis}
                 {diagnosisTemplates.some(t => t.name === diagnosis) && (
-                  <span className="ml-1 text-xs bg-indigo-200 px-1 rounded">Template</span>
+                  <span className="ml-1 text-xs text-indigo-600">(Template)</span>
                 )}
                 <button
                   type="button"
                   onClick={() => handleRemove(diagnosis)}
-                  className="ml-2 inline-flex items-center p-0.5 rounded-full text-indigo-600 hover:text-indigo-800 hover:bg-indigo-200"
+                  className="ml-2 hover:text-red-600"
                 >
                   <X className="h-4 w-4" />
                 </button>
