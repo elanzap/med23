@@ -1,34 +1,137 @@
-import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Plus, Pencil, Trash2, Search, Upload, Download } from 'lucide-react';
+import Papa from 'papaparse';
 import { useDrugStore } from '../../stores/drugStore';
-import { DrugForm } from './DrugForm';
 import type { Drug } from '../../types';
 
 export const DrugList: React.FC = () => {
   const { drugs, addDrug, updateDrug, deleteDrug } = useDrugStore();
-  const [showForm, setShowForm] = useState(false);
   const [editingDrug, setEditingDrug] = useState<Drug | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    type: '',
+    strength: '',
+    genericName: '',
+  });
 
   const filteredDrugs = drugs.filter(drug =>
     drug.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     drug.genericName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSubmit = (drugData: Omit<Drug, 'id'>) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const drugData = {
+      name: formData.name,
+      type: formData.type,
+      strength: formData.strength,
+      genericName: formData.genericName || undefined,
+    };
+
     if (editingDrug) {
       updateDrug(editingDrug.id, drugData);
+      setEditingDrug(null);
     } else {
       addDrug(drugData);
     }
-    setShowForm(false);
-    setEditingDrug(null);
+
+    // Reset form
+    setFormData({
+      name: '',
+      type: '',
+      strength: '',
+      genericName: '',
+    });
   };
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this drug?')) {
       deleteDrug(id);
     }
+  };
+
+  const handleEdit = (drug: Drug) => {
+    setEditingDrug(drug);
+    setFormData({
+      name: drug.name,
+      type: drug.type,
+      strength: drug.strength,
+      genericName: drug.genericName || '',
+    });
+  };
+
+  const handleImportCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Reset import errors
+    setImportErrors([]);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const importErrors: string[] = [];
+        const validDrugs: Omit<Drug, 'id'>[] = [];
+
+        results.data.forEach((row: any, index: number) => {
+          // Validate required fields
+          if (!row.name) {
+            importErrors.push(`Row ${index + 2}: Drug name is required`);
+            return;
+          }
+
+          validDrugs.push({
+            name: row.name.trim(),
+            type: row.type?.trim() || '',
+            strength: row.strength?.trim() || '',
+            genericName: row.genericName?.trim() || undefined,
+          });
+        });
+
+        // Add valid drugs
+        validDrugs.forEach(drug => addDrug(drug));
+
+        // Show any import errors
+        if (importErrors.length > 0) {
+          setImportErrors(importErrors);
+        }
+
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      },
+      error: (error) => {
+        console.error('CSV parsing error:', error);
+        setImportErrors(['Error parsing CSV file']);
+      }
+    });
+  };
+
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      ['name', 'type', 'strength', 'genericName'],
+      ['Paracetamol', 'Tablet', '500mg', 'Acetaminophen'],
+      ['Amoxicillin', 'Capsule', '250mg', 'Amoxicillin'],
+      ['Ibuprofen', 'Tablet', '400mg', 'Ibuprofen'],
+      ['Metformin', 'Tablet', '500mg', 'Metformin'],
+      ['Aspirin', 'Tablet', '100mg', 'Acetylsalicylic acid']
+    ];
+
+    const csvContent = templateData.map(e => e.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'drugs-template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -46,14 +149,131 @@ export const DrugList: React.FC = () => {
             placeholder="Search drugs..."
           />
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Drug
-        </button>
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            className="mr-4 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Template
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImportCSV}
+            className="hidden"
+            id="import-csv"
+          />
+          <label
+            htmlFor="import-csv"
+            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Import CSV
+          </label>
+        </div>
       </div>
+
+      {importErrors.length > 0 && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <ul>
+            {importErrors.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Add/Edit Drug Form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <div className="grid grid-cols-6 gap-6">
+              <div className="col-span-6 sm:col-span-3">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., Paracetamol"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+
+              <div className="col-span-6 sm:col-span-3">
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+                  Type
+                </label>
+                <input
+                  type="text"
+                  id="type"
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  placeholder="e.g., Tablet"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+
+              <div className="col-span-6 sm:col-span-3">
+                <label htmlFor="strength" className="block text-sm font-medium text-gray-700">
+                  Strength
+                </label>
+                <input
+                  type="text"
+                  id="strength"
+                  value={formData.strength}
+                  onChange={(e) => setFormData({ ...formData, strength: e.target.value })}
+                  placeholder="e.g., 500mg"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+
+              <div className="col-span-6 sm:col-span-3">
+                <label htmlFor="genericName" className="block text-sm font-medium text-gray-700">
+                  Generic Name
+                </label>
+                <input
+                  type="text"
+                  id="genericName"
+                  value={formData.genericName}
+                  onChange={(e) => setFormData({ ...formData, genericName: e.target.value })}
+                  placeholder="e.g., Acetaminophen"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
+            {editingDrug && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingDrug(null);
+                  setFormData({
+                    name: '',
+                    type: '',
+                    strength: '',
+                    genericName: '',
+                  });
+                }}
+                className="mr-4 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {editingDrug ? 'Update' : 'Add'} Drug
+            </button>
+          </div>
+        </div>
+      </form>
 
       {/* Drug List */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -94,10 +314,7 @@ export const DrugList: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
-                    onClick={() => {
-                      setEditingDrug(drug);
-                      setShowForm(true);
-                    }}
+                    onClick={() => handleEdit(drug)}
                     className="text-indigo-600 hover:text-indigo-900 mr-4"
                   >
                     <Pencil className="h-4 w-4" />
@@ -114,41 +331,6 @@ export const DrugList: React.FC = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Add/Edit Drug Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {editingDrug ? 'Edit Drug' : 'Add New Drug'}
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingDrug(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <span className="sr-only">Close</span>
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <DrugForm
-                initialData={editingDrug || undefined}
-                onSubmit={handleSubmit}
-                onCancel={() => {
-                  setShowForm(false);
-                  setEditingDrug(null);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

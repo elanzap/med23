@@ -102,7 +102,8 @@ export const DoctorList: React.FC = () => {
                   <div>
                     <h3 className="text-sm font-medium text-gray-900">{doctor.name}</h3>
                     <div className="mt-1 text-sm text-gray-500">
-                      <p>{doctor.speciality} • {doctor.qualification}</p>
+                      <p>{doctor.speciality}</p>
+                      <p> {doctor.qualification}</p>
                       <p>Registration: {doctor.registrationNumber}</p>
                       <p>Consultation Fee: 
                         {settings.defaultCurrency === 'USD' && '$'}
