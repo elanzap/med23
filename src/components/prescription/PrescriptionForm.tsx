@@ -102,7 +102,10 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({
       )}
 
       {prescription.labTests && prescription.labTests.length > 0 && (
-        <LabTestList labTests={prescription.labTests} />
+        <LabTestList 
+          labTests={prescription.labTests} 
+          onUpdate={updateLabTests} 
+        />
       )}
 
       <PrescriptionActions
