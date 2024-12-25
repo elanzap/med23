@@ -21,18 +21,28 @@ export const DiagnosisManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Diagnosis Templates</h3>
-          <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Template
-          </button>
-        </div>
+      <div className="bg-white shadow rounded-lg p-6 flex justify-between items-center">
+        <h3 className="text-lg font-medium text-gray-900">Diagnosis Templates</h3>
+        <button
+          onClick={() => setShowForm(true)}
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Template
+        </button>
+      </div>
 
+      {(showForm || editingTemplate) && (
+        <div className="bg-white rounded-lg shadow-xl p-6">
+          <DiagnosisTemplateForm
+            templateId={editingTemplate}
+            onClose={handleCloseForm}
+            className="w-full"
+          />
+        </div>
+      )}
+
+      <div className="bg-white shadow rounded-lg p-6">
         <div className="space-y-4">
           {diagnosisTemplates.length === 0 ? (
             <div className="text-center py-12">
@@ -104,13 +114,6 @@ export const DiagnosisManager: React.FC = () => {
           )}
         </div>
       </div>
-
-      {(showForm || editingTemplate) && (
-        <DiagnosisTemplateForm
-          templateId={editingTemplate}
-          onClose={handleCloseForm}
-        />
-      )}
     </div>
   );
 };
