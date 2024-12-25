@@ -24,3 +24,34 @@ body {
   width: 100%;
   min-height: 100vh;
 }
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  body.print-invoice .bg-white.rounded-lg.p-6 {
+    visibility: visible !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    border: none;
+    box-shadow: none;
+  }
+
+  body.print-invoice .bg-white.rounded-lg.p-6 * {
+    visibility: visible !important;
+  }
+
+  body.print-invoice nav,
+  body.print-invoice header,
+  body.print-invoice footer,
+  body.print-invoice .hidden-on-print,
+  body.print-invoice .flex.justify-between.items-center.mb-6 .flex.space-x-2,
+  body.print-invoice .mb-4.flex.items-center.justify-end.space-x-4 {
+    display: none !important;
+  }
+}

@@ -13,6 +13,7 @@ import { DosageManager } from './components/dosage/DosageManager';
 import { DrugList } from './components/drugs/DrugList';
 import { LabOrderInvoice } from './components/lab-orders/LabOrderInvoice';
 import { GeneralSettings } from './components/settings/GeneralSettings';
+import { GlobalSettings } from './components/settings/GlobalSettings';
 import type { Patient, Prescription } from './types';
 import { loadPatients, savePatients, loadPrescriptions, savePrescriptions } from './utils/storage';
 
@@ -163,6 +164,16 @@ const App: React.FC = () => {
               General Settings
             </h2>
             <GeneralSettings />
+          </div>
+        );
+
+      case 'global-settings':
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+              Global Settings
+            </h2>
+            <GlobalSettings />
           </div>
         );
 

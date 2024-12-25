@@ -39,6 +39,12 @@ export const NAVIGATION_ITEMS = [
     href: '#settings',
     subItems: [
       {
+        id: 'global-settings',
+        icon: Settings,
+        text: 'Global Settings',
+        href: '#global-settings'
+      },
+      {
         id: 'general-settings',
         icon: Building,
         text: 'General Settings',

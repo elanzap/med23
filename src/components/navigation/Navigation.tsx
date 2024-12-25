@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MenuItem } from './MenuItem';
 import { SubMenuItem } from './SubMenuItem';
 import { NAVIGATION_ITEMS } from '../../constants/navigation';
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 
 interface NavigationProps {
   activeSection: string;

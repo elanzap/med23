@@ -76,6 +76,9 @@ export interface LabInvoice {
   discount: number;
   total: number;
   status: 'saved' | 'printed';
+  // Optional lab details
+  labName?: string;
+  labLogo?: string;
 }
 
 export interface GeneralSettings {

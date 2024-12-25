@@ -1,18 +1,39 @@
 import React, { useState } from 'react';
 import { useLabInvoiceStore } from '../../stores/labInvoiceStore';
-import { Search, Printer } from 'lucide-react';
+import { useGlobalSettingsStore } from '../../stores/globalSettingsStore';
+import { Search, Printer, Eye } from 'lucide-react';
+import type { LabInvoice } from '../../types';
 
-export const LabInvoiceList: React.FC = () => {
-  const { invoices, updateInvoice } = useLabInvoiceStore();
+interface LabInvoiceListProps {
+  invoices?: LabInvoice[];
+  onViewInvoice?: (invoice: LabInvoice) => void;
+}
+
+export const LabInvoiceList: React.FC<LabInvoiceListProps> = ({ 
+  invoices: propInvoices, 
+  onViewInvoice 
+}) => {
+  const { invoices: storeInvoices, updateInvoice } = useLabInvoiceStore();
+  const { labName, labLogo } = useGlobalSettingsStore();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredInvoices = invoices.filter(invoice => 
-    invoice.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (invoice.prescriptionId && invoice.prescriptionId.toLowerCase().includes(searchTerm.toLowerCase()))
-  ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Use prop invoices if provided, otherwise use store invoices
+  const invoices = propInvoices || storeInvoices;
 
-  const handlePrint = async (invoice: any) => {
+  const filteredInvoices = invoices
+    .filter(invoice => {
+      // Ensure invoice has all required properties
+      if (!invoice || !invoice.patientName || !invoice.id) return false;
+
+      return (
+        invoice.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (invoice.prescriptionId && invoice.prescriptionId.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const handlePrint = async (invoice: LabInvoice) => {
     try {
       window.print();
       updateInvoice(invoice.id, 'printed');
@@ -21,21 +42,53 @@ export const LabInvoiceList: React.FC = () => {
     }
   };
 
+  const renderStatus = (status: string) => {
+    switch (status) {
+      case 'printed':
+        return (
+          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+            Printed
+          </span>
+        );
+      case 'saved':
+        return (
+          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+            Saved
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+            Unknown
+          </span>
+        );
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Lab Test Invoices</h2>
+    <div className="bg-white shadow-md rounded-lg p-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-4">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search invoices..."
-              className="w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          {labLogo && (
+            <img 
+              src={labLogo} 
+              alt={`${labName} Logo`} 
+              className="h-12 w-12 object-contain rounded-lg"
             />
-            <Search className="absolute right-3 top-2.5 h-4 w-4 text-gray-400" />
-          </div>
+          )}
+          <h2 className="text-xl font-semibold text-gray-800">
+            {labName || 'Lab Invoices'}
+          </h2>
+        </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            placeholder="Search invoices..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <Search className="text-gray-500" />
         </div>
       </div>
 
@@ -70,36 +123,51 @@ export const LabInvoiceList: React.FC = () => {
             {filteredInvoices.map((invoice) => (
               <tr key={invoice.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {invoice.id}
+                  {invoice.id || 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(invoice.date).toLocaleDateString()}
+                  {invoice.date ? new Date(invoice.date).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {invoice.patientName}
+                  {invoice.patientName || 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {invoice.prescriptionId || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{invoice.total.toFixed(2)}
+                  ₹{typeof invoice.total === 'number' ? invoice.total.toFixed(2) : 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    invoice.status === 'printed' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {invoice.status}
-                  </span>
+                  {renderStatus(invoice.status || 'unknown')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handlePrint(invoice)}
-                    className="text-indigo-600 hover:text-indigo-900 ml-4"
-                  >
-                    <Printer className="h-4 w-4" />
-                  </button>
+                  <div className="flex justify-end space-x-2">
+                    {onViewInvoice && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('View Invoice Button Clicked', invoice);
+                          onViewInvoice(invoice);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900"
+                        title="View Invoice"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePrint(invoice);
+                      }}
+                      className="text-green-600 hover:text-green-900"
+                      title="Print Invoice"
+                    >
+                      <Printer className="h-4 w-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
