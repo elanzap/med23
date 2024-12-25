@@ -55,16 +55,42 @@ const App: React.FC = () => {
   };
 
   const handlePrescriptionSubmit = (prescriptionData: Partial<Prescription>) => {
+    console.error('PRESCRIPTION SUBMISSION:', {
+      prescriptionData,
+      selectedPatient
+    });
+
     if (!selectedPatient) return;
 
-    const newPrescription: Prescription = {
-      ...prescriptionData as Prescription,
+    const finalPrescriptionData: Partial<Prescription> = {
+      ...prescriptionData,
       patientId: selectedPatient.id,
       patientName: selectedPatient.name,
-      date: new Date().toISOString()
+      gender: selectedPatient.gender,
+      age: selectedPatient.age ? selectedPatient.age.toString() : undefined,
+      phone: selectedPatient.phoneNumber,
+      patient: {
+        ...selectedPatient,
+        age: selectedPatient.age ? selectedPatient.age.toString() : undefined
+      }
     };
 
-    setPrescriptions(prev => [...(prev || []), newPrescription]);
+    console.error('FINAL PRESCRIPTION DATA:', finalPrescriptionData);
+
+    const newPrescription = {
+      ...finalPrescriptionData,
+      date: new Date().toISOString(),
+      id: Math.random().toString(36).substr(2, 9)
+    } as Prescription;
+
+    const updatedPrescriptions = [...prescriptions, newPrescription];
+    setPrescriptions(updatedPrescriptions);
+    savePrescriptions(updatedPrescriptions);
+
+    // Generate PDF
+    // generatePrescriptionPDF(newPrescription);
+
+    // Reset selection
     setSelectedPatient(null);
     setActiveSection('prescriptions');
   };

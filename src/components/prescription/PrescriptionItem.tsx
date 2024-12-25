@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Calendar, User } from 'lucide-react';
+import { FileText, Calendar, User, Printer } from 'lucide-react';
 import type { Patient, Prescription } from '../../types';
 
 interface PrescriptionItemProps {
@@ -13,6 +13,12 @@ export const PrescriptionItem: React.FC<PrescriptionItemProps> = ({
   patient,
   onEdit,
 }) => {
+  const handleViewPDF = () => {
+    if (prescription.pdfUrl) {
+      window.open(prescription.pdfUrl, '_blank');
+    }
+  };
+
   return (
     <li className="py-5">
       <div className="relative focus-within:ring-2 focus-within:ring-indigo-500">
@@ -54,7 +60,7 @@ export const PrescriptionItem: React.FC<PrescriptionItemProps> = ({
               </div>
             </div>
           </div>
-          <div className="ml-4 flex-shrink-0">
+          <div className="ml-4 flex-shrink-0 flex space-x-2">
             <button
               onClick={() => onEdit(prescription)}
               className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
@@ -62,6 +68,15 @@ export const PrescriptionItem: React.FC<PrescriptionItemProps> = ({
               <FileText className="h-4 w-4 mr-2" />
               View Details
             </button>
+            {prescription.pdfUrl && (
+              <button
+                onClick={handleViewPDF}
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                View & Print
+              </button>
+            )}
           </div>
         </div>
       </div>

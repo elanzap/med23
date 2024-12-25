@@ -8,12 +8,25 @@ export const usePrescription = (patientId: string, initialData?: Partial<Prescri
     diagnoses: [],
     medications: [],
     labTests: [],
+    // Explicitly add patient details from initial data
+    patientName: initialData?.patientName,
+    gender: initialData?.gender || initialData?.patient?.gender,
+    age: initialData?.age || initialData?.patient?.age?.toString(),
+    phone: initialData?.phone || initialData?.patient?.phoneNumber,
     ...initialData,
   });
 
   useEffect(() => {
     if (initialData) {
-      setPrescription(prev => ({ ...prev, ...initialData }));
+      setPrescription(prev => ({
+        ...prev, 
+        ...initialData,
+        // Ensure patient details are added even if not in initial data
+        patientName: initialData.patientName || prev.patientName,
+        gender: initialData.gender || initialData.patient?.gender || prev.gender,
+        age: initialData.age || initialData.patient?.age?.toString() || prev.age,
+        phone: initialData.phone || initialData.patient?.phoneNumber || prev.phone
+      }));
     }
   }, [initialData?.prescriptionId]);
 

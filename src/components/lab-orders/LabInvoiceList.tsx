@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLabInvoiceStore } from '../../stores/labInvoiceStore';
 import { useGlobalSettingsStore } from '../../stores/globalSettingsStore';
-import { Search, Printer, Eye } from 'lucide-react';
+import { Search, Eye } from 'lucide-react';
 import type { LabInvoice } from '../../types';
 
 interface LabInvoiceListProps {
@@ -33,15 +33,6 @@ export const LabInvoiceList: React.FC<LabInvoiceListProps> = ({
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const handlePrint = async (invoice: LabInvoice) => {
-    try {
-      window.print();
-      updateInvoice(invoice.id, 'printed');
-    } catch (error) {
-      console.error('Error printing invoice:', error);
-    }
-  };
-
   const renderStatus = (status: string) => {
     switch (status) {
       case 'printed':
@@ -63,6 +54,20 @@ export const LabInvoiceList: React.FC<LabInvoiceListProps> = ({
           </span>
         );
     }
+  };
+
+  const renderActionButtons = (invoice: LabInvoice) => {
+    return (
+      <div className="flex space-x-2">
+        <button
+          onClick={() => onViewInvoice(invoice)}
+          className="text-indigo-600 hover:text-indigo-900"
+          title="View Invoice"
+        >
+          <Eye className="h-5 w-5" />
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -141,33 +146,7 @@ export const LabInvoiceList: React.FC<LabInvoiceListProps> = ({
                   {renderStatus(invoice.status || 'unknown')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex justify-end space-x-2">
-                    {onViewInvoice && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('View Invoice Button Clicked', invoice);
-                          onViewInvoice(invoice);
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900"
-                        title="View Invoice"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePrint(invoice);
-                      }}
-                      className="text-green-600 hover:text-green-900"
-                      title="Print Invoice"
-                    >
-                      <Printer className="h-4 w-4" />
-                    </button>
-                  </div>
+                  {renderActionButtons(invoice)}
                 </td>
               </tr>
             ))}

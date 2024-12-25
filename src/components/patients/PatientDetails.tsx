@@ -24,6 +24,16 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
     );
   }, [prescriptions]);
 
+  const handleViewDetails = (prescription: Prescription) => {
+    setViewingPrescription(prescription);
+  };
+
+  const handleViewPDF = (prescription: Prescription) => {
+    if (prescription.pdfUrl) {
+      window.open(prescription.pdfUrl, '_blank');
+    }
+  };
+
   const formatVitalSigns = (vitalSigns: any) => {
     if (!vitalSigns) return null;
     return (
@@ -120,19 +130,23 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setViewingPrescription(prescription)}
+                        type="button"
+                        onClick={() => handleViewDetails(prescription)}
                         className="inline-flex items-center px-2 py-1 text-sm text-indigo-600 hover:text-indigo-900"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        View
+                        View Details
                       </button>
-                      <button
-                        onClick={() => setViewingPrescription(prescription)}
-                        className="inline-flex items-center px-2 py-1 text-sm text-indigo-600 hover:text-indigo-900"
-                      >
-                        <Printer className="h-4 w-4 mr-1" />
-                        Print
-                      </button>
+                      {prescription.pdfUrl && (
+                        <button
+                          type="button"
+                          onClick={() => handleViewPDF(prescription)}
+                          className="inline-flex items-center px-2 py-1 text-sm text-green-600 hover:text-green-900"
+                        >
+                          <Printer className="h-4 w-4 mr-1" />
+                          View & Print
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -220,11 +234,12 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
         </div>
       </div>
 
-      {/* View Prescription Modal */}
+      {/* Prescription View Modal */}
       {viewingPrescription && (
         <PrescriptionView
           prescription={viewingPrescription}
           onClose={() => setViewingPrescription(null)}
+          onEdit={() => {/* Add edit functionality if needed */}}
         />
       )}
     </div>

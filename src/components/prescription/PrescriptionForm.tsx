@@ -55,22 +55,48 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({
   };
 
   const handleSubmit = (data: any) => {
+    console.error('PRESCRIPTION FORM SUBMIT:', {
+      data,
+      patient,
+      patientDetails: {
+        id: patient.id,
+        name: patient.name,
+        gender: patient.gender,
+        age: patient.age,
+        phoneNumber: patient.phoneNumber
+      }
+    });
+
     onSubmit({
       ...data,
       visitId: ids.visitId,
       prescriptionId: ids.prescriptionId,
-      patientId,
-      patientName: patient.name
+      patientId: patient.id,
+      patientName: patient.name,
+      gender: patient.gender,
+      age: patient.age ? patient.age.toString() : undefined,
+      phone: patient.phoneNumber,
+      patient: {
+        ...patient,
+        age: patient.age ? patient.age.toString() : undefined
+      }
     });
   };
 
   return (
     <form className="space-y-8">
-      <div className="bg-gray-50 px-4 py-2 rounded-md">
-        <p className="text-sm text-gray-600">Visit ID: {ids.visitId}</p>
-        <p className="text-sm text-gray-600">Prescription ID: {ids.prescriptionId}</p>
-        <p className="text-sm text-gray-600">Patient: {patient.name}</p>
-        <p className="text-sm text-gray-600">Patient ID: {patient.patientId}</p>
+      <div className="bg-gray-50 px-4 py-2 rounded-md grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-sm text-gray-600 font-semibold">Visit ID: <span className="font-normal">{ids.visitId}</span></p>
+          <p className="text-sm text-gray-600 font-semibold">Prescription ID: <span className="font-normal">{ids.prescriptionId}</span></p>
+          <p className="text-sm text-gray-600 font-semibold">Patient: <span className="font-normal">{patient.name}</span></p>
+          <p className="text-sm text-gray-600 font-semibold">Patient ID: <span className="font-normal">{patient.patientId}</span></p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-600 font-semibold">Age: <span className="font-normal">{patient.age} years</span></p>
+          <p className="text-sm text-gray-600 font-semibold">Gender: <span className="font-normal">{patient.gender}</span></p>
+          <p className="text-sm text-gray-600 font-semibold">Phone: <span className="font-normal">{patient.phoneNumber}</span></p>
+        </div>
       </div>
 
       <VitalSignsForm

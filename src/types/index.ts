@@ -16,9 +16,20 @@ export interface Prescription {
   date: string;
   vitalSigns?: VitalSigns;
   symptoms?: string;
+  findings?: string;
   diagnoses?: string[];
   medications?: Medication[];
   labTests?: string[];
+  advice?: string;
+  // Additional fields for prescription
+  gender?: string;
+  age?: string;
+  bloodGroup?: string;
+  knownAllergies?: string;
+  phone?: string;
+  email?: string;
+  pdfUrl?: string; // New field to store PDF URL
+  pdfBlob?: Blob; // New field to store PDF Blob
 }
 
 export interface VitalSigns {

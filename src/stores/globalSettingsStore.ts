@@ -128,3 +128,15 @@ export const useGlobalSettingsStore = create<GlobalSettings>()(
     }
   )
 );
+
+export const getGlobalSettings = () => {
+  const state = useGlobalSettingsStore.getState();
+  return {
+    clinicName: state.clinicName || 'Medical Clinic',
+    clinicAddress: state.clinicAddress || 'Address Not Available',
+    clinicPhone: state.clinicPhone || 'Contact Not Available',
+    clinicLogo: state.clinicLogo || '',
+    clinicEmail: state.clinicEmail || '',
+    clinicWebsite: state.clinicWebsite || ''
+  };
+};
